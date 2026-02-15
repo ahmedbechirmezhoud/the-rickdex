@@ -12,7 +12,6 @@ import CharacterDetailsScreen from "@/screens/CharacterDetails"
 import EpisodeDetailsScreen from "@/screens/EpisodeDetails"
 import EpisodesScreen from "@/screens/Episodes"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
-import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
@@ -34,6 +33,7 @@ const AppStack = () => {
 
   return (
     <Stack.Navigator
+      initialRouteName="Episodes"
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
@@ -45,7 +45,6 @@ const AppStack = () => {
       <Stack.Screen name="Episodes" component={EpisodesScreen} />
       <Stack.Screen name="EpisodeDetails" component={EpisodeDetailsScreen} />
       <Stack.Screen name="CharacterDetails" component={CharacterDetailsScreen} />
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
     </Stack.Navigator>
   )
 }
