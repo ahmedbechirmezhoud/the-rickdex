@@ -1,35 +1,32 @@
-/**
- * This Api class lets you define an API endpoint and methods to request
- * data and process it.
- *
- * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
- * documentation for more details.
- */
 import { ApisauceInstance, create } from "apisauce"
 
 import Config from "@/config"
 
-import type { ApiConfig } from "./types"
+import { adaptEpisodesListResponse } from "./adapters"
+import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
+import type {
+  ApiConfig,
+  EpisodesListParams,
+  EpisodesListResponseApi,
+  EpisodesPageUi,
+} from "./types"
 
-/**
- * Configuring the apisauce instance.
- */
 export const DEFAULT_API_CONFIG: ApiConfig = {
   url: Config.API_URL,
   timeout: 10000,
 }
 
 /**
- * Manages all requests to the API. You can use this class to build out
- * various requests that you need to call from your backend API.
+ * Standard API result shape used across endpoints.
+ * - ok => strongly typed data
+ * - otherwise => a GeneralApiProblem describing the failure
  */
+export type ApiResult<T> = { kind: "ok"; data: T } | GeneralApiProblem
+
 export class Api {
   apisauce: ApisauceInstance
   config: ApiConfig
 
-  /**
-   * Set up our API instance. Keep this lightweight!
-   */
   constructor(config: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = config
     this.apisauce = create({
@@ -39,6 +36,25 @@ export class Api {
         Accept: "application/json",
       },
     })
+  }
+
+  /**
+   * GET /episode?page=&name=&episode=
+   */
+  async getEpisodesList(params: EpisodesListParams = {}): Promise<ApiResult<EpisodesPageUi>> {
+    const response = await this.apisauce.get<EpisodesListResponseApi>("/episode", params)
+
+    if (!response.ok) {
+      // Normalize all network/HTTP issues into a single known union
+      return getGeneralApiProblem(response) ?? { kind: "unknown", temporary: true }
+    }
+
+    const data = response.data
+    if (!data || !data.info || !Array.isArray(data.results)) {
+      return { kind: "bad-data" }
+    }
+
+    return { kind: "ok", data: adaptEpisodesListResponse(data) }
   }
 }
 
