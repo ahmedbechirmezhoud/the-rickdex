@@ -11,9 +11,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.rickdex.app",
@@ -62,6 +60,9 @@
   "extra": {
     "ignite": {
       "version": "11.4.0"
+    },
+    "eas": {
+      "projectId": "1ac29184-5604-4995-8bed-5960078abf6f"
     }
   }
 }
