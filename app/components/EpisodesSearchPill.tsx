@@ -246,14 +246,14 @@ const styles = StyleSheet.create({
   },
 
   inputWrap: {
+    backgroundColor: TRANSPARENT,
     bottom: 0,
     justifyContent: "center",
     left: 0,
-    paddingHorizontal: 18,
     position: "absolute",
 
     right: 0,
-    top: 0, // tighter than the pill’s 32 feels better for typing
+    top: 0,
   },
 
   label: {
