@@ -8,6 +8,7 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from "react-native"
+import * as Haptics from "expo-haptics"
 import { KeyboardStickyView } from "react-native-keyboard-controller"
 import Animated, {
   Extrapolation,
@@ -84,6 +85,8 @@ export default function EpisodesSearchPill({
 
   const expand = useCallback(() => {
     if (isExpanded) return
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
     onPress?.()
     setIsExpanded(true)
