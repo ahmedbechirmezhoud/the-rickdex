@@ -1,10 +1,11 @@
 {
-  "name": "the-rickdex",
-  "slug": "the-rickdex",
-  "scheme": "the-rickdex",
+  "name": "The Rickdex",
+  "slug": "rickdex",
+  "scheme": "rickdex",
   "version": "1.0.0",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
+  "platforms": ["ios", "android"],
   "icon": "./assets/images/app-icon-all.png",
   "updates": {
     "fallbackToCacheTimeout": 0
@@ -26,10 +27,6 @@
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
     "bundleIdentifier": "com.rickdex.app"
-  },
-  "web": {
-    "favicon": "./assets/images/app-icon-web-favicon.png",
-    "bundler": "metro"
   },
   "plugins": [
     "expo-localization",
