@@ -101,7 +101,7 @@ export default function CharacterDetailsScreen({ route }: AppStackScreenProps<"C
     }
   }, [isBiometricReady, isClassified])
 
-  const shouldShowLockCard = isClassified && !isUnlocked
+  const shouldShowLockCard = isClassified && !isUnlocked && isBiometricReady !== false
 
   return (
     <Screen preset="scroll" style={[$styles.flex1, styles.container]}>
@@ -156,15 +156,10 @@ export default function CharacterDetailsScreen({ route }: AppStackScreenProps<"C
 
                 {isBiometricReady === null ? (
                   <Text style={styles.lockSubtitle}>Preparing biometric authentication…</Text>
-                ) : isBiometricReady ? (
+                ) : (
                   <Text style={styles.lockSubtitle}>
                     This file is classified. Authenticate with biometrics to view the entity
                     details.
-                  </Text>
-                ) : (
-                  <Text style={styles.lockSubtitle}>
-                    Biometrics aren’t set up on this device. Enable Face ID / Touch ID to unlock
-                    this file.
                   </Text>
                 )}
 
