@@ -18,8 +18,8 @@ const LOGO = require("../../assets/images/RickAndMorty.png")
 export default function EpisodesScreen() {
   const insets = useSafeAreaInsets()
 
-  // ✅ updated hook API (see hook implementation below)
-  const { episodes, isLoading, isLoadingMore, hasNextPage, loadMore, errorKind } = useEpisodesList()
+  const { episodes, isLoading, isLoadingMore, hasNextPage, loadMore, errorKind, reload } =
+    useEpisodesList()
 
   const { rows, stickyHeaderIndices } = useMemo(() => buildRows(episodes), [episodes])
 
@@ -102,6 +102,7 @@ export default function EpisodesScreen() {
           getItemType={getItemType}
           stickyHeaderIndices={stickyHeaderIndices}
           estimatedItemSize={92}
+          onRefresh={reload}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={contentContainerStyle}
           onEndReached={onEndReached}
