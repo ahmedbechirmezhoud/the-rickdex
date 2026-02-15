@@ -1,28 +1,24 @@
 /**
- * This file imports configuration objects from either the config.dev.js file
- * or the config.prod.js file depending on whether we are in __DEV__ or not.
+ * App config.
  *
- * Note that we do not gitignore these files. Unlike on web servers, just because
- * these are not checked into your repo doesn't mean that they are secure.
- * In fact, you're shipping a JavaScript bundle with every
- * config variable in plain text. Anyone who downloads your app can easily
- * extract them.
- *
- * If you doubt this, just bundle your app, and then go look at the bundle and
- * search it for one of your config variable values. You'll find it there.
- *
- * Read more here: https://reactnative.dev/docs/security#storing-sensitive-info
+ * ⚠️ These values ship in the JS bundle. Do NOT store secrets here.
  */
 import BaseConfig from "./config.base"
-import DevConfig from "./config.dev"
-import ProdConfig from "./config.prod"
 
-let ExtraConfig = ProdConfig
-
-if (__DEV__) {
-  ExtraConfig = DevConfig
+type AppConfig = typeof BaseConfig & {
+  /**
+   * Base URL for your REST API.
+   */
+  API_URL: string
 }
 
-const Config = { ...BaseConfig, ...ExtraConfig }
+const Config: AppConfig = {
+  ...BaseConfig,
+  // Rick & Morty REST base URL
+  API_URL: "https://rickandmortyapi.com/api",
+}
+
+// Prevent accidental mutation during development
+if (__DEV__) Object.freeze(Config)
 
 export default Config
