@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import EpisodeCard from "@/components/EpisodeCard"
 import EpisodesSearchPill from "@/components/EpisodesSearchPill"
+import ErrorState from "@/components/ErrorState"
 import { Text } from "@/components/Text"
 import { useEpisodesList } from "@/hooks/useEpisodesList"
 import { useEpisodesSearch } from "@/hooks/useEpisodesSearch"
@@ -87,6 +88,8 @@ export default function EpisodesScreen() {
     )
   }, [isLoadingMore])
 
+  const showSearchBar = !isLoading && !errorKind
+
   return (
     <View style={[$styles.flex1, styles.container]}>
       <LinearGradient
@@ -105,9 +108,7 @@ export default function EpisodesScreen() {
           <ActivityIndicator color="#735C92" size="large" />
         </View>
       ) : errorKind ? (
-        <View style={styles.error}>
-          <Text preset="default" text={`Couldn’t load episodes (${errorKind}).`} />
-        </View>
+        <ErrorState onPressRetry={reload} />
       ) : mode === "empty" ? (
         <View style={styles.error}>
           <Text preset="default" text={`No episodes match "${search.trim()}".`} />
@@ -127,8 +128,7 @@ export default function EpisodesScreen() {
           ListFooterComponent={ListFooterComponent}
         />
       )}
-
-      <EpisodesSearchPill value={search} onChangeText={setSearch} />
+      {showSearchBar ? <EpisodesSearchPill value={search} onChangeText={setSearch} /> : null}
     </View>
   )
 }
