@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 import { ActivityIndicator, Image, StyleSheet, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useNavigation } from "@react-navigation/native"
@@ -9,23 +9,15 @@ import EpisodeCard from "@/components/EpisodeCard"
 import EpisodesSearchPill from "@/components/EpisodesSearchPill"
 import { Text } from "@/components/Text"
 import { useEpisodesList } from "@/hooks/useEpisodesList"
+import { useEpisodesSearch } from "@/hooks/useEpisodesSearch"
 import { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { $styles } from "@/theme/styles"
-import { buildRows, Row } from "@/utils/episodes"
+import type { Row } from "@/utils/episodes"
 
 const BG = "#F8F6FF"
 const GRADIENT_COLORS = ["#735C92", BG] as const
 const GRADIENT_LOCATIONS = [0, 0.3602] as const
 const LOGO = require("../../assets/images/RickAndMorty.png")
-
-function normalizeText(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
-    .replace(/\s+/g, " ")
-}
 
 export default function EpisodesScreen() {
   const insets = useSafeAreaInsets()
@@ -34,19 +26,8 @@ export default function EpisodesScreen() {
   const { episodes, isLoading, isLoadingMore, hasNextPage, loadMore, errorKind, reload } =
     useEpisodesList()
 
-  const [search, setSearch] = useState("")
-
-  const normalizedSearch = useMemo(() => normalizeText(search), [search])
-
-  const filteredEpisodes = useMemo(() => {
-    if (!normalizedSearch) return episodes
-    return episodes.filter((ep) => normalizeText(ep.name).includes(normalizedSearch))
-  }, [episodes, normalizedSearch])
-
-  const { rows, stickyHeaderIndices } = useMemo(
-    () => buildRows(filteredEpisodes),
-    [filteredEpisodes],
-  )
+  const { search, setSearch, isSearching, mode, rows, stickyHeaderIndices } =
+    useEpisodesSearch(episodes)
 
   const gradientStyle = useMemo(() => {
     return [styles.gradient, { height: insets.top + 24 }]
@@ -91,11 +72,11 @@ export default function EpisodesScreen() {
   )
 
   const onEndReached = useCallback(() => {
-    // avoid auto-loading pages while the list is filtered down
-    if (normalizedSearch) return
+    // avoid auto-loading pages while actively searching
+    if (isSearching) return
     if (!hasNextPage || isLoading || isLoadingMore) return
     loadMore()
-  }, [normalizedSearch, hasNextPage, isLoading, isLoadingMore, loadMore])
+  }, [hasNextPage, isLoading, isLoadingMore, isSearching, loadMore])
 
   const ListFooterComponent = useMemo(() => {
     if (!isLoadingMore) return null
@@ -127,7 +108,7 @@ export default function EpisodesScreen() {
         <View style={styles.error}>
           <Text preset="default" text={`Couldn’t load episodes (${errorKind}).`} />
         </View>
-      ) : rows.length === 0 ? (
+      ) : mode === "empty" ? (
         <View style={styles.error}>
           <Text preset="default" text={`No episodes match "${search.trim()}".`} />
         </View>
@@ -138,7 +119,6 @@ export default function EpisodesScreen() {
           keyExtractor={keyExtractor}
           getItemType={getItemType}
           stickyHeaderIndices={stickyHeaderIndices}
-          estimatedItemSize={92}
           onRefresh={reload}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={listContentStyle}
