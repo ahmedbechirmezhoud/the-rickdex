@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 
 import Character from "@/components/Character"
+import ErrorState from "@/components/ErrorState"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useEpisodeDetails } from "@/hooks/useEpisodeDetails"
@@ -30,7 +31,7 @@ export default function EpisodeDetails({ route }: AppStackScreenProps<"EpisodeDe
   const insets = useSafeAreaInsets()
   const { episodeId: episodeIdParam } = route.params ?? {}
 
-  const { episode, characters, isLoading, errorKind } = useEpisodeDetails(episodeIdParam, {
+  const { episode, characters, isLoading, errorKind, reload } = useEpisodeDetails(episodeIdParam, {
     maxCharacters: MAX_CHARACTERS,
   })
 
@@ -56,8 +57,7 @@ export default function EpisodeDetails({ route }: AppStackScreenProps<"EpisodeDe
         </View>
       ) : errorKind ? (
         <View style={styles.centerState}>
-          <Text style={styles.stateTitle}>Uh-oh.</Text>
-          <Text style={styles.stateText}>Failed to load this episode ({errorKind}).</Text>
+          <ErrorState onPressRetry={reload} />
         </View>
       ) : (
         <>
@@ -156,12 +156,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
     textAlign: "center",
-  },
-
-  stateTitle: {
-    color: TEXT_DARK,
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 6,
   },
 })
