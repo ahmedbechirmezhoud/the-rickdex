@@ -17,7 +17,10 @@ const LOGO = require("../../assets/images/RickAndMorty.png")
 
 export default function EpisodesScreen() {
   const insets = useSafeAreaInsets()
-  const { episodes, isLoading, errorKind } = useEpisodesList()
+
+  // ✅ updated hook API (see hook implementation below)
+  const { episodes, isLoading, isLoadingMore, hasNextPage, loadMore, errorKind } = useEpisodesList()
+
   const { rows, stickyHeaderIndices } = useMemo(() => buildRows(episodes), [episodes])
 
   const gradientStyle = useMemo(() => [styles.gradient, { height: insets.top + 24 }], [insets.top])
@@ -55,6 +58,21 @@ export default function EpisodesScreen() {
     )
   }, [])
 
+  // ✅ FlashList infinite scroll callback
+  const onEndReached = useCallback(() => {
+    if (!hasNextPage || isLoading || isLoadingMore) return
+    loadMore()
+  }, [hasNextPage, isLoading, isLoadingMore, loadMore])
+
+  const ListFooterComponent = useMemo(() => {
+    if (!isLoadingMore) return null
+    return (
+      <View style={styles.footer}>
+        <ActivityIndicator color="#735C92" />
+      </View>
+    )
+  }, [isLoadingMore])
+
   return (
     <View style={[$styles.flex1, styles.container]}>
       <LinearGradient
@@ -86,6 +104,9 @@ export default function EpisodesScreen() {
           estimatedItemSize={92}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={contentContainerStyle}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.6}
+          ListFooterComponent={ListFooterComponent}
         />
       )}
     </View>
@@ -110,6 +131,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
+  },
+  footer: {
+    paddingVertical: 16,
   },
   gradient: {
     width: "100%",
