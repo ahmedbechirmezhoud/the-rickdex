@@ -3,6 +3,14 @@
   "version": "0.0.1",
   "private": true,
   "main": "index.tsx",
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
@@ -29,7 +37,8 @@
     "build:android:device": "eas build --profile development:device --platform android --local",
     "build:android:preview": "eas build --profile preview --platform android --local",
     "build:android:prod": "eas build --profile production --platform android --local",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@expo-google-fonts/space-grotesk": "^0.4.0",
@@ -76,6 +85,8 @@
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
+    "@commitlint/cli": "20.4.1",
+    "@commitlint/config-conventional": "20.4.1",
     "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
