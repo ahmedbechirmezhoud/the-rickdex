@@ -1,4 +1,13 @@
-import { EpisodeApi, EpisodesListResponseApi, EpisodesPageUi, EpisodeUi } from "./types"
+import {
+  CharacterApi,
+  CharactersListResponseApi,
+  CharactersPageUi,
+  CharacterUi,
+  EpisodeApi,
+  EpisodesListResponseApi,
+  EpisodesPageUi,
+  EpisodeUi,
+} from "./types"
 
 const extractPageParam = (url: string | null): number | null => {
   if (!url) return null
@@ -29,3 +38,41 @@ export const adaptEpisodesListResponse = (payload: EpisodesListResponseApi): Epi
   },
   episodes: payload.results.map(adaptEpisode),
 })
+
+export const adaptCharacter = (character: CharacterApi): CharacterUi => ({
+  id: character.id,
+  name: character.name,
+  status: character.status,
+  species: character.species,
+  type: character.type,
+  gender: character.gender,
+  origin: {
+    name: character.origin.name,
+    url: character.origin.url,
+  },
+  location: {
+    name: character.location.name,
+    url: character.location.url,
+  },
+  image: character.image,
+  episodes: character.episode,
+  url: character.url,
+  created: character.created,
+})
+
+export const adaptCharactersListResponse = (
+  payload: CharactersListResponseApi,
+): CharactersPageUi => ({
+  info: {
+    count: payload.info.count,
+    pages: payload.info.pages,
+    next: payload.info.next,
+    prev: payload.info.prev,
+    nextPage: extractPageParam(payload.info.next),
+    prevPage: extractPageParam(payload.info.prev),
+  },
+  characters: payload.results.map(adaptCharacter),
+})
+
+export const adaptCharactersByIdsResponse = (payload: CharacterApi[]): CharacterUi[] =>
+  payload.map(adaptCharacter)
