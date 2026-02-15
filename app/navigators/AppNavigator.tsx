@@ -8,6 +8,7 @@ import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
+import CharacterDetailsScreen from "@/screens/CharacterDetails"
 import EpisodeDetailsScreen from "@/screens/EpisodeDetails"
 import EpisodesScreen from "@/screens/Episodes"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
@@ -43,6 +44,7 @@ const AppStack = () => {
     >
       <Stack.Screen name="Episodes" component={EpisodesScreen} />
       <Stack.Screen name="EpisodeDetails" component={EpisodeDetailsScreen} />
+      <Stack.Screen name="CharacterDetails" component={CharacterDetailsScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
     </Stack.Navigator>
   )

@@ -21,6 +21,7 @@ export type AppStackParamList = {
   Login: undefined
   Episodes: undefined
   EpisodeDetails: { episodeId: string }
+  CharacterDetails: { characterId: string }
   Demo: NavigatorScreenParams<DemoTabParamList>
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
