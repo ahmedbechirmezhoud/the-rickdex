@@ -48,8 +48,10 @@ const styles = {
     flex: 1,
   },
   epName: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: "#F8F6FF",
+    fontSize: 18,
+    fontWeight: "bold" as const,
+    lineHeight: 28,
   },
   epDate: {
     color: "#A6A6C7",
