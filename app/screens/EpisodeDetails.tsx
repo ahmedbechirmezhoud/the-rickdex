@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { ActivityIndicator, Image, StyleSheet, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation } from "@react-navigation/native"
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 
 import Character from "@/components/Character"
@@ -35,6 +36,7 @@ export default function EpisodeDetails({ route }: AppStackScreenProps<"EpisodeDe
     maxCharacters: MAX_CHARACTERS,
   })
 
+  const navigation = useNavigation<AppStackScreenProps<"EpisodeDetails">["navigation"]>()
   const gradientStyle = useMemo(() => [styles.gradient, { height: insets.top + 24 }], [insets.top])
 
   return (
@@ -85,7 +87,9 @@ export default function EpisodeDetails({ route }: AppStackScreenProps<"EpisodeDe
                     status: c.status,
                     ctaText: c.id === 1 ? "Access Classified File" : "Access File",
                   }}
-                  onPress={() => {}}
+                  onPress={() =>
+                    navigation.navigate("CharacterDetails", { characterId: c.id.toString() })
+                  }
                 />
               ))}
             </View>
