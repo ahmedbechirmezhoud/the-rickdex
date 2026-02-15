@@ -15,10 +15,10 @@ const BG = "#F8F6FF"
 const PURPLE = "#735C92"
 const TEXT_DARK = "#2B2545"
 const TEXT_MUTED = "#A6A6C7"
-const CARD_BG = "#FFFFFF"
+const WHITE = "#FFFFFF"
+const CARD_BG = WHITE
 const DIVIDER_BG = "#ECE8F6"
 const LOCK_ERROR_RED = "#B42318"
-const WHITE = "#FFFFFF"
 
 const GRADIENT_COLORS = [PURPLE, BG] as const
 const GRADIENT_LOCATIONS = [0, 0.3602] as const
