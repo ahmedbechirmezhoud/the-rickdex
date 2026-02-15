@@ -1,6 +1,7 @@
-import { useMemo } from "react"
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import * as LocalAuthentication from "expo-local-authentication"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import ErrorState from "@/components/ErrorState"
@@ -16,6 +17,8 @@ const TEXT_DARK = "#2B2545"
 const TEXT_MUTED = "#A6A6C7"
 const CARD_BG = "#FFFFFF"
 const DIVIDER_BG = "#ECE8F6"
+const LOCK_ERROR_RED = "#B42318"
+const WHITE = "#FFFFFF"
 
 const GRADIENT_COLORS = [PURPLE, BG] as const
 const GRADIENT_LOCATIONS = [0, 0.3602] as const
@@ -28,6 +31,77 @@ export default function CharacterDetailsScreen({ route }: AppStackScreenProps<"C
   const { character, isLoading, errorKind, reload } = useCharacterDetails(characterIdParam)
 
   const gradientStyle = useMemo(() => [styles.gradient, { height: insets.top + 24 }], [insets.top])
+
+  const isClassified = character?.id === 1
+
+  const [isBiometricReady, setIsBiometricReady] = useState<boolean | null>(null)
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+
+  // Reset lock state when character changes.
+  useEffect(() => {
+    setIsUnlocked(false)
+    setAuthError(null)
+    setIsAuthLoading(false)
+  }, [character?.id])
+
+  // Only check biometrics when the character is classified.
+  useEffect(() => {
+    let mounted = true
+
+    async function checkBiometrics() {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync()
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync()
+        if (!mounted) return
+        setIsBiometricReady(hasHardware && isEnrolled)
+      } catch {
+        if (!mounted) return
+        setIsBiometricReady(false)
+      }
+    }
+
+    if (isClassified) {
+      setIsBiometricReady(null)
+      checkBiometrics()
+    } else {
+      setIsBiometricReady(null)
+    }
+
+    return () => {
+      mounted = false
+    }
+  }, [isClassified])
+
+  const handleAuthenticate = useCallback(async () => {
+    if (!isClassified) return
+    if (isBiometricReady !== true) return
+
+    setAuthError(null)
+    setIsAuthLoading(true)
+
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate to access classified information",
+        cancelLabel: "Not now",
+        fallbackLabel: "Use passcode",
+        disableDeviceFallback: false,
+      })
+
+      if (result.success) {
+        setIsUnlocked(true)
+      } else {
+        setAuthError("Authentication failed. Try again.")
+      }
+    } catch {
+      setAuthError("Biometric authentication isn’t available right now.")
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }, [isBiometricReady, isClassified])
+
+  const shouldShowLockCard = isClassified && !isUnlocked
 
   return (
     <Screen preset="scroll" style={[$styles.flex1, styles.container]}>
@@ -71,49 +145,92 @@ export default function CharacterDetailsScreen({ route }: AppStackScreenProps<"C
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>ENTITY DETAILS</Text>
             <Text style={styles.sectionSubtitle}>
-              {character?.id === 1 ? "Classified" : ""} information from the Citadel database
+              {isClassified
+                ? "Classified information from the Citadel database"
+                : "Information from the Citadel database"}
             </Text>
 
-            <View style={styles.card}>
-              <View style={styles.row}>
-                <Text style={styles.label}>Gender</Text>
-                <Text style={styles.value}>{character?.gender ?? "—"}</Text>
+            {shouldShowLockCard ? (
+              <View style={styles.lockCard}>
+                <Text style={styles.lockTitle}>Restricted Access</Text>
+
+                {isBiometricReady === null ? (
+                  <Text style={styles.lockSubtitle}>Preparing biometric authentication…</Text>
+                ) : isBiometricReady ? (
+                  <Text style={styles.lockSubtitle}>
+                    This file is classified. Authenticate with biometrics to view the entity
+                    details.
+                  </Text>
+                ) : (
+                  <Text style={styles.lockSubtitle}>
+                    Biometrics aren’t set up on this device. Enable Face ID / Touch ID to unlock
+                    this file.
+                  </Text>
+                )}
+
+                {authError ? <Text style={styles.lockError}>{authError}</Text> : null}
+
+                <Pressable
+                  onPress={handleAuthenticate}
+                  disabled={isAuthLoading || isBiometricReady !== true}
+                  style={({ pressed }) => [
+                    styles.lockButton,
+                    (pressed || isAuthLoading) && styles.lockButtonPressed,
+                    (isAuthLoading || isBiometricReady !== true) && styles.lockButtonDisabled,
+                  ]}
+                >
+                  {isAuthLoading ? (
+                    <ActivityIndicator />
+                  ) : (
+                    <Text style={styles.lockButtonText}>Unlock with biometrics</Text>
+                  )}
+                </Pressable>
               </View>
+            ) : (
+              <View style={styles.card}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Gender</Text>
+                  <Text style={styles.value}>{character?.gender ?? "—"}</Text>
+                </View>
 
-              <View style={styles.divider} />
+                <View style={styles.divider} />
 
-              <View style={styles.row}>
-                <Text style={styles.label}>Species</Text>
-                <Text style={styles.value}>{character?.species ?? "—"}</Text>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Species</Text>
+                  <Text style={styles.value}>{character?.species ?? "—"}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.row}>
+                  <Text style={styles.label}>Origin</Text>
+                  <Text style={styles.value}>{character?.origin?.name ?? "—"}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.row}>
+                  <Text style={styles.label}>Location</Text>
+                  <Text style={styles.value}>{character?.location?.name ?? "—"}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.row}>
+                  <Text style={styles.label}>Type</Text>
+                  <Text style={styles.value}>{character?.type?.trim() ? character.type : "—"}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.row}>
+                  <Text style={styles.label}>Origin</Text>
+                  <Text style={styles.value}>
+                    {character?.origin?.name ? character?.origin?.name : "—"}
+                  </Text>
+                </View>
               </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Origin</Text>
-                <Text style={styles.value}>{character?.origin?.name ?? "—"}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Location</Text>
-                <Text style={styles.value}>{character?.location?.name ?? "—"}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Type</Text>
-                <Text style={styles.value}>{character?.type?.trim() ? character.type : "—"}</Text>
-              </View>
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Origin</Text>
-                <Text style={styles.value}>{character?.origin?.name ?? "—"}</Text>
-              </View>
-            </View>
+            )}
           </View>
         </>
       )}
@@ -165,6 +282,56 @@ const styles = StyleSheet.create({
 
   label: { color: TEXT_MUTED, fontSize: 13, fontWeight: "600" },
 
+  lockButton: {
+    alignItems: "center",
+    backgroundColor: TEXT_DARK,
+    borderRadius: 9999,
+    justifyContent: "center",
+    marginTop: 14,
+    paddingVertical: 12,
+    width: "100%",
+  },
+
+  lockButtonDisabled: { opacity: 0.5 },
+
+  lockButtonPressed: { opacity: 0.9 },
+
+  lockButtonText: {
+    color: WHITE,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  lockCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    marginTop: 16,
+    padding: 16,
+    width: "100%",
+  },
+
+  lockError: {
+    color: LOCK_ERROR_RED,
+    fontSize: 12,
+    marginTop: 10,
+    textAlign: "center",
+  },
+
+  lockSubtitle: {
+    color: TEXT_MUTED,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  lockTitle: {
+    color: TEXT_DARK,
+    fontSize: 18,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
   logo: { alignSelf: "center", height: 44, marginBottom: 16, width: 145 },
 
   name: {
@@ -182,6 +349,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
   },
+
   section: {
     marginTop: 28,
     paddingHorizontal: 16,
@@ -198,6 +366,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: "center",
   },
+
   subline: {
     color: TEXT_MUTED,
     fontSize: 12,
