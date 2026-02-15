@@ -1,12 +1,14 @@
 import { useCallback, useMemo } from "react"
 import { ActivityIndicator, Image, StyleSheet, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation } from "@react-navigation/native"
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import EpisodeCard from "@/components/EpisodeCard"
 import { Text } from "@/components/Text"
 import { useEpisodesList } from "@/hooks/useEpisodesList"
+import { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { $styles } from "@/theme/styles"
 import { buildRows, Row } from "@/utils/episodes"
 
@@ -36,6 +38,8 @@ export default function EpisodesScreen() {
 
   const getItemType = useCallback((item: Row) => item.type, [])
 
+  const navigation = useNavigation<AppStackScreenProps<"EpisodeDetails">["navigation"]>()
+
   const renderItem = useCallback(({ item }: ListRenderItemInfo<Row>) => {
     if (item.type === "header") {
       return (
@@ -53,6 +57,9 @@ export default function EpisodesScreen() {
             episode: item.episode.episode,
             airDate: item.episode.airDate,
           }}
+          onPress={() =>
+            navigation.navigate("EpisodeDetails", { episodeId: item.episode.id.toString() })
+          }
         />
       </View>
     )
