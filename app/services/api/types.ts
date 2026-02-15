@@ -1,37 +1,60 @@
-/**
- * These types indicate the shape of the data you expect to receive from your
- * API endpoint, assuming it's a JSON object like we have.
- */
-export interface EpisodeItem {
-  title: string
-  pubDate: string
-  link: string
-  guid: string
-  author: string
-  thumbnail: string
-  description: string
-  content: string
-  enclosure: {
-    link: string
-    type: string
-    length: number
-    duration: number
-    rating: { scheme: string; value: string }
-  }
-  categories: string[]
+export interface ApiInfo {
+  count: number
+  pages: number
+  next: string | null
+  prev: string | null
 }
 
-export interface ApiFeedResponse {
-  status: string
-  feed: {
-    url: string
-    title: string
-    link: string
-    author: string
-    description: string
-    image: string
+/**
+ * Matches the REST payload.
+ */
+export interface EpisodeApi {
+  id: number
+  name: string
+  air_date: string
+  episode: string
+  characters: string[]
+  url: string
+  created: string
+}
+
+export interface EpisodesListResponseApi {
+  info: ApiInfo
+  results: EpisodeApi[]
+}
+
+/**
+ * Query params supported by /episode.
+ */
+export interface EpisodesListParams {
+  page?: number
+  name?: string
+  episode?: string
+}
+
+/**
+ * UI-friendly model
+ */
+export interface EpisodeUi {
+  id: number
+  name: string
+  airDate: string
+  episode: string
+  characters: string[]
+  url: string
+  created: string
+}
+
+export interface EpisodesPageUi {
+  info: {
+    count: number
+    pages: number
+    next: string | null
+    prev: string | null
+    nextPage: number | null
+    prevPage: number | null
   }
-  items: EpisodeItem[]
+  episodes: EpisodeUi[]
 }
 
 /**
