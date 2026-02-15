@@ -242,9 +242,7 @@ const styles = StyleSheet.create({
     backgroundColor: TRANSPARENT,
     borderRadius: 9999,
     color: INPUT_TEXT,
-
     fontSize: 16,
-    height: 44,
     paddingHorizontal: 12,
   },
 
