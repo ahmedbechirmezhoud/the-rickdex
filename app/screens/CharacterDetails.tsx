@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
-import * as LocalAuthentication from "expo-local-authentication"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import ErrorState from "@/components/ErrorState"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useCharacterDetails } from "@/hooks/useCharacterDetails"
+import { useLocalAuthLock } from "@/hooks/useLocalAuthLock"
 import { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { $styles } from "@/theme/styles"
 
@@ -34,74 +34,19 @@ export default function CharacterDetailsScreen({ route }: AppStackScreenProps<"C
 
   const isClassified = character?.id === 1
 
-  const [isBiometricReady, setIsBiometricReady] = useState<boolean | null>(null)
-  const [isUnlocked, setIsUnlocked] = useState(false)
-  const [isAuthLoading, setIsAuthLoading] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
-
-  // Reset lock state when character changes.
-  useEffect(() => {
-    setIsUnlocked(false)
-    setAuthError(null)
-    setIsAuthLoading(false)
-  }, [character?.id])
-
-  // Only check biometrics when the character is classified.
-  useEffect(() => {
-    let mounted = true
-
-    async function checkBiometrics() {
-      try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync()
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync()
-        if (!mounted) return
-        setIsBiometricReady(hasHardware && isEnrolled)
-      } catch {
-        if (!mounted) return
-        setIsBiometricReady(false)
-      }
-    }
-
-    if (isClassified) {
-      setIsBiometricReady(null)
-      checkBiometrics()
-    } else {
-      setIsBiometricReady(null)
-    }
-
-    return () => {
-      mounted = false
-    }
-  }, [isClassified])
+  const { isBiometricReady, isAuthLoading, authError, shouldShowLockCard, authenticate } =
+    useLocalAuthLock({
+      isEnabled: isClassified,
+      resetKey: character?.id,
+      promptMessage: "Authenticate to access classified information",
+      cancelLabel: "Not now",
+      fallbackLabel: "Use passcode",
+      disableDeviceFallback: false,
+    })
 
   const handleAuthenticate = useCallback(async () => {
-    if (!isClassified) return
-    if (isBiometricReady !== true) return
-
-    setAuthError(null)
-    setIsAuthLoading(true)
-
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate to access classified information",
-        cancelLabel: "Not now",
-        fallbackLabel: "Use passcode",
-        disableDeviceFallback: false,
-      })
-
-      if (result.success) {
-        setIsUnlocked(true)
-      } else {
-        setAuthError("Authentication failed. Try again.")
-      }
-    } catch {
-      setAuthError("Biometric authentication isn’t available right now.")
-    } finally {
-      setIsAuthLoading(false)
-    }
-  }, [isBiometricReady, isClassified])
-
-  const shouldShowLockCard = isClassified && !isUnlocked && isBiometricReady !== false
+    await authenticate()
+  }, [authenticate])
 
   return (
     <Screen preset="scroll" style={[$styles.flex1, styles.container]}>
