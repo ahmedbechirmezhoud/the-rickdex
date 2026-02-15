@@ -1,34 +1,80 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { api } from "@/services/api"
 import { EpisodeUi } from "@/services/api/types"
 
-export function useEpisodesList(page = 1) {
+export function useEpisodesList(initialPage = 1) {
   const [episodes, setEpisodes] = useState<EpisodeUi[]>([])
+  const [page, setPage] = useState(initialPage)
+
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [errorKind, setErrorKind] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
+  const [hasNextPage, setHasNextPage] = useState(false)
+
+  // prevents duplicate requests if onEndReached fires multiple times
+  const inFlightRef = useRef(false)
+
+  const loadPage = useCallback(async (targetPage: number, mode: "replace" | "append") => {
+    if (inFlightRef.current) return
+    inFlightRef.current = true
+
+    if (mode === "replace") setIsLoading(true)
+    else setIsLoadingMore(true)
+
     setErrorKind(null)
 
     try {
-      const res = await api.getEpisodesList({ page })
-      if (res.kind === "ok") setEpisodes(res.data.episodes)
-      else setErrorKind(res.kind)
+      const res = await api.getEpisodesList({ page: targetPage })
+
+      if (res.kind === "ok") {
+        const { episodes: newEpisodes, info } = res.data
+
+        setHasNextPage(info.nextPage != null)
+        setPage(targetPage)
+
+        setEpisodes((prev) => {
+          if (mode === "replace") return newEpisodes
+
+          // dedupe by id (safe against double fetch)
+          const byId = new Map(prev.map((e) => [e.id, e]))
+          for (const e of newEpisodes) byId.set(e.id, e)
+          return Array.from(byId.values())
+        })
+      } else {
+        setErrorKind(res.kind)
+      }
     } catch {
       setErrorKind("unknown")
     } finally {
-      setIsLoading(false)
+      if (mode === "replace") setIsLoading(false)
+      else setIsLoadingMore(false)
+
+      inFlightRef.current = false
     }
-  }, [page])
+  }, [])
+
+  const reload = useCallback(async () => {
+    await loadPage(initialPage, "replace")
+  }, [initialPage, loadPage])
+
+  const loadMore = useCallback(async () => {
+    if (!hasNextPage || isLoading || isLoadingMore) return
+    await loadPage(page + 1, "append")
+  }, [hasNextPage, isLoading, isLoadingMore, loadPage, page])
 
   useEffect(() => {
-    const run = async () => {
-      await load()
-    }
-    run()
-  }, [load])
+    reload()
+  }, [reload])
 
-  return { episodes, isLoading, errorKind, reload: load }
+  return {
+    episodes,
+    isLoading,
+    isLoadingMore,
+    errorKind,
+    hasNextPage,
+    loadMore,
+    reload,
+  }
 }
